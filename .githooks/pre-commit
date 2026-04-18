@@ -1,0 +1,42 @@
+#!/bin/sh
+# Pre-commit hook: check for personal information patterns in staged files.
+# Patterns are defined in .githooks/pii-patterns (one regex per line).
+#
+# To suppress a false positive, add "pii-ok" on the same line.
+
+set -e
+
+PATTERNS_FILE="$(git rev-parse --show-toplevel)/.githooks/pii-patterns"
+
+if [ ! -f "$PATTERNS_FILE" ]; then
+  exit 0
+fi
+
+found=0
+
+while IFS= read -r pattern; do
+  # Skip empty lines and comments
+  case "$pattern" in
+    ''|'#'*) continue ;;
+  esac
+
+  # Check staged diff for pattern, excluding pii-ok lines and the patterns/policy files themselves
+  matches=$(git diff --cached -U0 --diff-filter=ACMR -- ':!.githooks/pii-patterns' ':!.claude/rules/pii-policy.md' | grep -E '^\+' | grep -v '^+++' | grep -v 'pii-ok' | grep -Ei "$pattern" || true)
+
+  if [ -n "$matches" ]; then
+    if [ "$found" -eq 0 ]; then
+      echo "ERROR: Potential personal information detected in staged changes:"
+      echo ""
+      found=1
+    fi
+    echo "  Pattern: $pattern"
+    echo "$matches" | sed 's/^/    /'
+    echo ""
+  fi
+done < "$PATTERNS_FILE"
+
+if [ "$found" -ne 0 ]; then
+  echo "To fix: remove or redact the flagged content."
+  echo "To suppress a false positive, add 'pii-ok' as a comment on that line."
+  exit 1
+fi

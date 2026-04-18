@@ -1,0 +1,9 @@
+# PII patterns to block from commits.
+# One extended regex per line. Lines starting with # are comments.
+# Add "pii-ok" as a comment on any line to suppress a match.
+#
+# Copy this file to .githooks/pii-patterns and add your own patterns.
+# Example:
+# my-github-username
+# my-private-project
+# specific-brand-name
