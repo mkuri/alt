@@ -65,10 +65,11 @@ def test_routine_baseline_args():
     assert args.date == "2026-05-01"
 
 
-def test_routine_complete_with_note():
+def test_routine_complete_args():
     parser = build_parser()
-    args = parser.parse_args(["routine", "complete", "Dental checkup", "health", "--note", "Next: Oct 2026"])
-    assert args.note == "Next: Oct 2026"
+    args = parser.parse_args(["routine", "complete", "Dental checkup", "health"])
+    assert args.name == "Dental checkup"
+    assert args.category == "health"
 
 
 def test_format_entry():
@@ -92,10 +93,8 @@ def test_format_routine_event():
         "routine_name": "Clean the toilet",
         "category": "household",
         "completed_at": "2026-04-08 10:00:00+09:00",
-        "kind": "completed",
-        "note": None,
     }
     output = format_routine_event(event)
     assert "Clean the toilet" in output
     assert "household" in output
-    assert "completed" in output
+    assert "2026-04-08" in output

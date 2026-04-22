@@ -60,14 +60,12 @@ def build_parser() -> argparse.ArgumentParser:
     routine_complete = routine_sub.add_parser("complete")
     routine_complete.add_argument("name")
     routine_complete.add_argument("category")
-    routine_complete.add_argument("--note")
 
     # routine baseline
     routine_baseline = routine_sub.add_parser("baseline")
     routine_baseline.add_argument("name")
     routine_baseline.add_argument("category")
     routine_baseline.add_argument("--date", required=True)
-    routine_baseline.add_argument("--note")
 
     # routine last
     routine_last = routine_sub.add_parser("last")
@@ -83,11 +81,6 @@ def build_parser() -> argparse.ArgumentParser:
     # routine delete
     routine_delete = routine_sub.add_parser("delete")
     routine_delete.add_argument("id")
-
-    # routine update-note
-    routine_update_note = routine_sub.add_parser("update-note")
-    routine_update_note.add_argument("id")
-    routine_update_note.add_argument("--note", required=True)
 
     # nutrition-item
     ni_parser = subparsers.add_parser("nutrition-item")
@@ -175,8 +168,7 @@ def format_entry(entry: dict) -> str:
 def format_routine_event(event: dict) -> str:
     """Format a routine event for display."""
     date = str(event["completed_at"])[:10]
-    note = f"  ({event['note']})" if event.get("note") else ""
-    return f"{event['category']:<12} {event['routine_name']:<35} {date}  {event['kind']}{note}"
+    return f"{event['category']:<12} {event['routine_name']:<35} {date}"
 
 
 def main():
@@ -267,11 +259,11 @@ def _handle_entry(db, args, use_json: bool):
 
 def _handle_routine(db, args, use_json: bool):
     if args.action == "complete":
-        routines.complete_routine(db, args.name, args.category, note=args.note)
+        routines.complete_routine(db, args.name, args.category)
         print(f"Marked '{args.name}' as completed")
 
     elif args.action == "baseline":
-        routines.add_baseline(db, args.name, args.category, date=args.date, note=args.note)
+        routines.add_baseline(db, args.name, args.category, date=args.date)
         print(f"Set baseline for '{args.name}' at {args.date}")
 
     elif args.action == "last":
@@ -298,23 +290,14 @@ def _handle_routine(db, args, use_json: bool):
         elif use_json:
             print(json.dumps(results, default=str))
         else:
-            print(f"{'ID':<38} {'Date':<12} {'Kind':<10} Note")
+            print(f"{'ID':<38} {'Date':<12}")
             for event in results:
                 date = str(event["completed_at"])[:10]
-                note = event["note"] or "—"
-                print(f"{event['id']:<38} {date:<12} {event['kind']:<10} {note}")
+                print(f"{event['id']:<38} {date:<12}")
 
     elif args.action == "delete":
         if routines.delete_event(db, args.id):
             print(f"Deleted routine event {args.id}")
-        else:
-            print(f"Routine event {args.id} not found", file=sys.stderr)
-            sys.exit(1)
-
-    elif args.action == "update-note":
-        note = args.note if args.note != "" else None
-        if routines.update_note(db, args.id, note):
-            print(f"Updated note for {args.id}")
         else:
             print(f"Routine event {args.id} not found", file=sys.stderr)
             sys.exit(1)
