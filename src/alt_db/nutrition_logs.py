@@ -60,7 +60,7 @@ def is_message_processed(db, source_message_id: str) -> bool:
         "SELECT COUNT(*) FROM nutrition_logs WHERE source_message_id = $1",
         [source_message_id],
     )
-    return result.rows[0][0] > 0
+    return int(result.rows[0][0]) > 0
 
 
 def daily_summary(db, logged_date: str) -> dict:
